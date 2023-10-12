@@ -1,0 +1,27 @@
+import random
+
+class DrawingApp:
+    def __init__(self):
+        self.shapes = ["circle", "square", "triangle"]
+        self.colors = ["RED", "GREEN", "BLUE", "YELLOW"]
+        self.selected_combinations = []
+
+    def select_combination(self, shape, color):
+        action = random.choice(["load", "unload"])
+        if len(self.selected_combinations) < 3:
+            self.selected_combinations.append((shape, color, action))
+
+    def print_selected_combinations(self):
+        for combination in self.selected_combinations:
+            shape, color, action = combination
+            print(f"Shape: {shape}, Color: {color}, Action: {action}")
+
+    def run(self):
+        for _ in range(3):
+            shape = random.choice(self.shapes)
+            color = random.choice(self.colors)
+            self.select_combination(shape, color)
+        self.print_selected_combinations()
+
+app = DrawingApp()
+app.run()
