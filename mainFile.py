@@ -22,10 +22,7 @@ if __name__ == "__main__":
     detector = ObjectDetector(objects)
 
     # Wait for GUI window to be closed
-    detected_objects, object_locations = detector.run()
-
-    print(object_locations)
-    
+    detected_objects = detector.run()
 
     # Print the detected object locations
     for index, object in enumerate(detected_objects, start=1):
