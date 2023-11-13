@@ -75,9 +75,10 @@ class ObjectDetector:
             #cv2.imshow(color + " Canny", frame_canny)
             kernel = np.ones((5, 5))
             frame_dil = cv2.dilate(frame_canny, kernel, iterations=1)
+            self.detect_shape(frame_dil, frame_contour)
             #cv2.imshow(color + " Dilated", frame_dil)
             #self.detect_shape(frame_dil, frame_contour)
-            self.detect_color(frame_hsv, frame_dil, frame_contour, threshold1, threshold2)
+            #self.detect_color(frame_hsv, frame_dil, frame_contour, threshold1, threshold2)
             #self.check_preferred_shapes()
 
             if cv2.waitKey(1) == 27:
@@ -132,7 +133,7 @@ class ObjectDetector:
                 detected_object = DetectedObject(shape, (cx + self.spec_x_0,  cy + self.spec_y_0))
                 self.detected_objects.append(detected_object)
 
-            cv2.drawContours(frame_contour[self.spec_y_0:self.spec_y_end, self.spec_x_0:self.spec_x_end], [cnt], -1, (255, 0, 0), 4)
+            cv2.drawContours(frame_contour[self.spec_y_0:self.spec_y_end, self.spec_x_0:self.spec_x_end], [cnt], -1, (255, 255, 0), 4)
         # Show contours
         cv2.imshow("Contour", frame_contour)
 
@@ -157,7 +158,7 @@ class ObjectDetector:
 
 
             # Implement shape detection within the masked frame for each color
-            self.detect_shape(frame_dil, frame_contour)
+            #self.detect_shape(frame_dil, frame_contour)
 
             # Associate detected colors with shapes
             for shape in self.detected_objects:
