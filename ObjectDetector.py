@@ -68,6 +68,8 @@ class ObjectDetector:
             self.spec_y_end = cv2.getTrackbarPos("spec_y(end)", "Parameters")
             cv2.rectangle(frame_contour, (self.spec_x_0, self.spec_y_0), (self.spec_x_end, self.spec_y_end),
                           (255, 0, 0), 3)
+            
+            
                         
             frame_canny = cv2.Canny(frame_gray, threshold1, threshold2)
             #cv2.imshow(color + " Canny", frame_canny)
@@ -75,7 +77,7 @@ class ObjectDetector:
             frame_dil = cv2.dilate(frame_canny, kernel, iterations=1)
             #cv2.imshow(color + " Dilated", frame_dil)
             #self.detect_shape(frame_dil, frame_contour)
-            self.detect_color(frame_hsv, frame_dil, frame_contour)
+            self.detect_color(frame_hsv, frame_dil, frame_contour, threshold1, threshold2)
             #self.check_preferred_shapes()
 
             if cv2.waitKey(1) == 27:
@@ -83,15 +85,12 @@ class ObjectDetector:
                 cv2.destroyAllWindows()
                 return self.detected_objects
 
-    def detect_shape(self, frame, frame_contour):
-        contours, _ = cv2.findContours(frame[self.spec_y_0:self.spec_y_end,
-                                                      self.spec_x_0:self.spec_x_end],
-                                               cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+    def detect_shape(self, frame_dil, frame_contour):
+        contours, _ = cv2.findContours(frame_dil[self.spec_y_0:self.spec_y_end, self.spec_x_0:self.spec_x_end], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        print(len(contours))
         #self.detected_objects = []  # Clear previous detected objects
 
         for cnt in contours:
-
             # Determine lenght of perimeter
             peri = cv2.arcLength(cnt, True)
 
@@ -110,24 +109,18 @@ class ObjectDetector:
 
             # Determine shape
             if area_min < area < area_max:
-                cv2.drawContours(frame_contour[self.spec_y_0:self.spec_y_end,
-                                               self.spec_x_0:self.spec_x_end], [cnt], -1, (255, 0, 255), 4)
+                
                 
                 M = cv2.moments(cnt)
                 cx = int(M["m10"] / M["m00"])
                 cy = int(M["m01"] / M["m00"])
 
-                # cv2.putText(frame_contour[self.spec_y_0:self.spec_y_end + 40,
-                #                           self.spec_x_0:self.spec_x_end + 40], "Color" (x + w + 10, y + 50),
-                #             cv2.FONT_HERSHEY_COMPLEX, .4, (0, 255, 0), 1)
-                # cv2.circle(frame_contour[self.spec_y_0:self.spec_y_end, self.spec_x_0:self.spec_x_end], (cx, cy),
+                #cv2.putText(frame_contour[self.spec_y_0:self.spec_y_end + 40, self.spec_x_0:self.spec_x_end + 40], "Color" (x + w + 10, y + 50),
+                #            cv2.FONT_HERSHEY_COMPLEX, .4, (0, 255, 0), 1)
+                #cv2.circle(frame_contour[self.spec_y_0:self.spec_y_end, self.spec_x_0:self.spec_x_end], (cx, cy),
                 #            3, (255, 255, 255), -1)
-                # cv2.putText(frame_contour[self.spec_y_0:self.spec_y_end + 40,
-                #                           self.spec_x_0:self.spec_x_end + 100], "Area:" + str(int(area)),
+                #cv2.putText(frame_contour[self.spec_y_0:self.spec_y_end + 40, self.spec_x_0:self.spec_x_end + 100], "Area:" + str(int(area)),
                 #             (x + w + 10, y + 35), cv2.FONT_HERSHEY_COMPLEX, .4, (0, 255, 0), 1)
-
-                # Show contours
-                cv2.imshow("Contour", frame)
 
                 if len(approx) == 3:
                     shape = "Triangle"
@@ -135,11 +128,17 @@ class ObjectDetector:
                     shape = "Rectangle"
                 else:
                     shape = "Circle"
-                cv2.putText(frame_contour[self.spec_y_0:self.spec_y_end+40,self.spec_x_0:self.spec_x_end+100], shape,(x+w+10,y+20), cv2.FONT_HERSHEY_COMPLEX, .4,(0,255,0),1)
+                cv2.putText(frame_contour[self.spec_y_0:self.spec_y_end + 40, self.spec_x_0:self.spec_x_end + 100], shape, (x + w + 10, y + 20), cv2.FONT_HERSHEY_COMPLEX, .4, (0, 255, 0), 1)
                 detected_object = DetectedObject(shape, (cx + self.spec_x_0,  cy + self.spec_y_0))
                 self.detected_objects.append(detected_object)
 
-    def detect_color(self, frame_hsv, frame_dil, frame_contour):
+            cv2.drawContours(frame_contour[self.spec_y_0:self.spec_y_end, self.spec_x_0:self.spec_x_end], [cnt], -1, (255, 0, 0), 4)
+        # Show contours
+        cv2.imshow("Contour", frame_contour)
+
+
+
+    def detect_color(self, frame_hsv, frame_dil, frame_contour, threshold1, threshold2):
         for color_name, color_range in self.color_ranges.items():
             mask = cv2.inRange(frame_hsv, color_range[0], color_range[1])
             # Apply the mask to the original frame_hsv
@@ -151,8 +150,14 @@ class ObjectDetector:
 
             cv2.imshow(color_name + " Masked", masked_gray)
 
+            frame_canny = cv2.Canny(masked_gray, threshold1, threshold2)
+            #cv2.imshow(color + " Canny", frame_canny)
+            kernel = np.ones((5, 5))
+            frame_dil = cv2.dilate(frame_canny, kernel, iterations=1)
+
+
             # Implement shape detection within the masked frame for each color
-            self.detect_shape(masked_gray, frame_contour)
+            self.detect_shape(frame_dil, frame_contour)
 
             # Associate detected colors with shapes
             for shape in self.detected_objects:
