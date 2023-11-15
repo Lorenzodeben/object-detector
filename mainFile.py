@@ -14,9 +14,7 @@ if __name__ == "__main__":
     # Get current color, shape, and direction
     objects = app.send_values()
     shapes, colors, directions = zip(*objects)
-    print(objects)
-
-  
+    
 
     # Initialize object detection
     detector = ObjectDetector(objects)
